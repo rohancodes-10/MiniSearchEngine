@@ -1,14 +1,30 @@
 ﻿using minisearchengine;
-using System.ComponentModel.DataAnnotations;
 
+var corpusPath = Path.Combine(AppContext.BaseDirectory, "corpus");
 var index = new InvertedIndex();
-index.AddDocument(0, "Doc A", "path/a", "the cat sat on the mat running run");
-index.AddDocument(1, "Doc B", "path/b", "the cat ran fast runs run");
-index.AddDocument(2, "Doc C", "path/c", "football is a popular sport with two teams cat");
+
+var files = Directory.GetFiles(corpusPath, "*.txt");
+var docId = 0;
+foreach (var file in files)
+{
+    var text = File.ReadAllText(file);
+    var title = Path.GetFileNameWithoutExtension(file);
+    index.AddDocument(docId, title, file, text);
+    docId++;
+}
 
 var scorer = new TfIdfScore(index);
-var results = scorer.Search("the cat is running");
-foreach (var r in results)
+
+while (true)
 {
-    Console.WriteLine($"[{r.Score:F4}] {r.Title} ({r.SourcePath})");
+    Console.Write("search> ");
+    var query = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(query) || query.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+        break;
+
+    var results = scorer.Search(query);
+    foreach (var r in results)
+    {
+        Console.WriteLine($"[{r.Score:F4}] {r.Title} - {r.Snippet}");
+    }
 }

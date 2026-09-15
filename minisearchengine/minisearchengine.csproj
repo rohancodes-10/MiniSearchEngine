@@ -6,5 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
+	<ItemGroup>
+		<None Include="corpus\**\*.txt" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 </Project>

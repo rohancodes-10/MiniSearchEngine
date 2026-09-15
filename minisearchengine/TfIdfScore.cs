@@ -39,18 +39,29 @@ namespace minisearchengine
                     }
                 }
             }
-           return scores
-                .OrderByDescending(kv => kv.Value)
-                .Take(topN)
-                .Select(kv => new SearchResult
-                {
-                    DocId = kv.Key,
-                    SourcePath = _index.Documents[kv.Key].SourcePath,
-                    Title = _index.Documents[kv.Key].DocumentName,
-                    Score = kv.Value
-                    
-                }).ToList();
+            return scores
+                 .OrderByDescending(kv => kv.Value)
+                 .Take(topN)
+                 .Select(kv => new SearchResult
+                 {
+                     DocId = kv.Key,
+                     SourcePath = _index.Documents[kv.Key].SourcePath,
+                     Title = _index.Documents[kv.Key].DocumentName,
+                     Score = kv.Value,
+                     Snippet = BuildSnippet(_index.Documents[kv.Key].RawText)
+                 }).ToList();
             
+        }
+        private string BuildSnippet(string rawText)
+        {
+            if (rawText.Length <= 150)
+            {
+                return rawText;
+            }
+            else
+            {
+                return rawText.Substring(0, 150)+"...";
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ namespace minisearchengine
     {
         public static List<string> Tokenize(string rawText)
         {
-            var LowerText = rawText.ToLower();
+            var LowerText = rawText.ToLowerInvariant();
             string[] pieces = Regex.Split(LowerText, @"[^a-z0-9]+");
 
 
