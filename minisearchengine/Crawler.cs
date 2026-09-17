@@ -10,10 +10,15 @@ namespace minisearchengine
         private readonly HashSet<string> _visited = new();
         private readonly Queue<string> _frontier = new();
         private readonly HttpClient _http = new();
+
+       
+
         public Crawler(string seedUrl)
         {
+            _http.DefaultRequestHeaders.Add("User-Agent", "MiniSearchEngineBot/1.0");
             _frontier.Enqueue(seedUrl);
         }
+       
         private async Task<(string text,List<string> links)> FetchPageAsync(string url)
         {
             //downloading the html as string
@@ -54,8 +59,33 @@ namespace minisearchengine
             var results = new List<(string Url, string Text)>();
             while(_frontier.Count>0 && _visited.Count < maxPages)
             {
-                Queue
+                var url = _frontier.Dequeue();
+
+                if (_visited.Contains(url))
+                {
+                    continue;
+                }
+                _visited.Add(url);
+                try
+                {
+                    var fetchdata = await FetchPageAsync(url);
+                    results.Add((url, fetchdata.text));
+
+                    foreach (var link in fetchdata.links)
+                    {
+                        if (!_visited.Contains(link))
+                        {
+                            _frontier.Enqueue(link);
+                        }
+                    }
+                }
+                catch (HttpRequestException)
+                {
+                    // this page failed to fetch (404, redirect issue, timeout, etc.) - skip it, keep crawling
+                    Console.WriteLine($"  Skipped (fetch failed): {url}");
+                }
             }
+            return results;
         }
         
     }
