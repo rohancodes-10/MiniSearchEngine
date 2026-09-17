@@ -10,6 +10,7 @@ namespace minisearchengine
         private readonly HashSet<string> _visited = new();
         private readonly Queue<string> _frontier = new();
         private readonly HttpClient _http = new();
+        private readonly Dictionary<string, HashSet<string>> _robotscache = new();
 
        
 
@@ -68,9 +69,18 @@ namespace minisearchengine
                 _visited.Add(url);
                 try
                 {
+                    var uri = new Uri(url);
+                    var domain = uri.Host;
+                    var path = uri.AbsolutePath;
+                    var disallowedPaths = await GetDisallowedPathsAsync(domain);
+
+                    if (disallowedPaths.Any(p => path.StartsWith(p)))
+                    {
+                        continue;
+                    }
                     var fetchdata = await FetchPageAsync(url);
                     results.Add((url, fetchdata.text));
-
+                    await Task.Delay(1000);
                     foreach (var link in fetchdata.links)
                     {
                         if (!_visited.Contains(link))
@@ -86,6 +96,37 @@ namespace minisearchengine
                 }
             }
             return results;
+        }
+
+        private async Task<HashSet<string>> GetDisallowedPathsAsync(string domain)
+        {
+            if (_robotscache.ContainsKey(domain))
+            {
+                return _robotscache[domain];
+            }
+            var disallowed = new HashSet<string>();
+            try
+            {
+               var robotsUrl= $"https://{domain}/robots.txt";
+                var robotsText = await _http.GetStringAsync(robotsUrl);
+                var Lines = robotsText.Split('\n');
+
+                foreach(var line in Lines)
+                {
+                    if(line.StartsWith("Disallow:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var path = line.Substring(9).Trim();
+                        disallowed.Add(path);
+                    }
+
+                }
+            }
+            catch (HttpRequestException)
+            {
+                Console.WriteLine("no robots.txt or failed to fetch");
+            }
+            _robotscache[domain] = disallowed;
+            return disallowed;
         }
         
     }
