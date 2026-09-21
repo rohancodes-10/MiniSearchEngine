@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace minisearchengine
 {
@@ -20,7 +21,7 @@ namespace minisearchengine
             _frontier.Enqueue(seedUrl);
         }
        
-        private async Task<(string text,List<string> links)> FetchPageAsync(string url)
+        private async Task<(string Title,string text,List<string> links)> FetchPageAsync(string url)
         {
             //downloading the html as string
           var html=  await _http.GetStringAsync(url);
@@ -31,6 +32,17 @@ namespace minisearchengine
 
             //extracting visible text 
             var text = doc.DocumentNode.InnerText;
+
+            var Title = doc.DocumentNode.SelectSingleNode("//title");
+            string title;
+            if (Title != null)
+            {
+                title = Title.InnerText.Trim();
+            }
+            else
+            {
+                title = url;
+            }
 
             var baseUri = new Uri(url);
             var linkNodes = doc.DocumentNode.SelectNodes("//a[@href]");
@@ -53,7 +65,7 @@ namespace minisearchengine
                     
                 }
             }
-            return (text, links);
+            return (title,text, links);
         }
         public async Task<List<(string Url,string Text)>> CrawlAsync(int maxPages)
         {
