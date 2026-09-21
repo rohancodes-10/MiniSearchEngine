@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
+
 
 namespace minisearchengine
 {
@@ -21,7 +21,7 @@ namespace minisearchengine
             _frontier.Enqueue(seedUrl);
         }
        
-        private async Task<(string Title,string text,List<string> links)> FetchPageAsync(string url)
+        private async Task<(string Title,string Text,List<string> Links)> FetchPageAsync(string url)
         {
             //downloading the html as string
           var html=  await _http.GetStringAsync(url);
@@ -31,7 +31,8 @@ namespace minisearchengine
             doc.LoadHtml(html);
 
             //extracting visible text 
-            var text = doc.DocumentNode.InnerText;
+            var contentNode = doc.DocumentNode.SelectSingleNode("//div[@id='mw-content-text']");
+            var text = contentNode != null ? contentNode.InnerText : doc.DocumentNode.InnerText;
 
             var TitleNode = doc.DocumentNode.SelectSingleNode("//title");
             string title;
@@ -67,9 +68,9 @@ namespace minisearchengine
             }
             return (title,text, links);
         }
-        public async Task<List<(string Url,string Text)>> CrawlAsync(int maxPages)
+        public async Task<List<(string Url,string Text,string Title)>> CrawlAsync(int maxPages)
         {
-            var results = new List<(string Url, string Text)>();
+            var results = new List<(string Url, string Text,string Title)>();
             while(_frontier.Count>0 && _visited.Count < maxPages)
             {
                 var url = _frontier.Dequeue();
@@ -85,15 +86,15 @@ namespace minisearchengine
                     var domain = uri.Host;
                     var path = uri.AbsolutePath;
                     var disallowedPaths = await GetDisallowedPathsAsync(domain);
-
+                    Console.WriteLine(disallowedPaths.Contains("/") ? "BLOCKS EVERYTHING (found bare '/')" : "does not block everything");
                     if (disallowedPaths.Any(p => path.StartsWith(p)))
                     {
                         continue;
                     }
                     var fetchdata = await FetchPageAsync(url);
-                    results.Add((url, fetchdata.text));
+                    results.Add((url, fetchdata.Text,fetchdata.Title));
                     await Task.Delay(1000);
-                    foreach (var link in fetchdata.links)
+                    foreach (var link in fetchdata.Links)
                     {
                         if (!_visited.Contains(link))
                         {
@@ -122,15 +123,27 @@ namespace minisearchengine
                var robotsUrl= $"https://{domain}/robots.txt";
                 var robotsText = await _http.GetStringAsync(robotsUrl);
                 var Lines = robotsText.Split('\n');
+                bool inWildcardSection = false;
 
-                foreach(var line in Lines)
+                foreach (var line in Lines)
                 {
-                    if(line.StartsWith("Disallow:", StringComparison.OrdinalIgnoreCase))
+                    var trimmed = line.Trim();
+
+                    if (trimmed.StartsWith("User-agent:", StringComparison.OrdinalIgnoreCase))
                     {
-                        var path = line.Substring(9).Trim();
-                        disallowed.Add(path);
+                        var agent = trimmed.Substring("User-agent:".Length).Trim();
+                        inWildcardSection = (agent == "*");
+                        continue;
                     }
 
+                    if (inWildcardSection && trimmed.StartsWith("Disallow:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var path = trimmed.Substring("Disallow:".Length).Trim();
+                        if (path.Length > 0)
+                        {
+                            disallowed.Add(path);
+                        }
+                    }
                 }
             }
             catch (HttpRequestException)

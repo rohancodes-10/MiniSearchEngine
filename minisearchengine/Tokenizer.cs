@@ -57,9 +57,9 @@ public static class Stemmer
             if (word.EndsWith(suffix,StringComparison.Ordinal))
             {
                 var stem = word.Substring(0, word.Length - suffix.Length);
-                if (suffix == "ing"&& stem[^2] == stem[^1]&& !"aeiou".Contains(stem[^1]))
+                if (suffix == "ing" && stem.Length >= 2 && stem[^1] == stem[^2] && !"aeiou".Contains(stem[^1]))
                 {
-                   var result= stem.Substring(0, stem.Length - 1);
+                    var result = stem.Substring(0, stem.Length - 1);
                     return result;
                 }
                 return stem;
