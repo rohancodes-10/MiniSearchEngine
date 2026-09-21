@@ -33,11 +33,11 @@ namespace minisearchengine
             //extracting visible text 
             var text = doc.DocumentNode.InnerText;
 
-            var Title = doc.DocumentNode.SelectSingleNode("//title");
+            var TitleNode = doc.DocumentNode.SelectSingleNode("//title");
             string title;
-            if (Title != null)
+            if (TitleNode != null)
             {
-                title = Title.InnerText.Trim();
+                title = TitleNode.InnerText.Trim();
             }
             else
             {
