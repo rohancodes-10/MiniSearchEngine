@@ -74,31 +74,36 @@ namespace MiniSearchEnginee
             while(_frontier.Count>0 && _visited.Count < maxPages)
             {
                 var url = _frontier.Dequeue();
+                var uri = new Uri(url);
+                var normalizedUrl = uri.GetLeftPart(UriPartial.Query);
 
-                if (_visited.Contains(url))
+                if (_visited.Contains(normalizedUrl))
                 {
                     continue;
                 }
-                _visited.Add(url);
+                _visited.Add(normalizedUrl);
                 try
                 {
-                    var uri = new Uri(url);
+                    
                     var domain = uri.Host;
                     var path = uri.AbsolutePath;
                     var disallowedPaths = await GetDisallowedPathsAsync(domain);
-                    Console.WriteLine(disallowedPaths.Contains("/") ? "BLOCKS EVERYTHING (found bare '/')" : "does not block everything");
+                   
                     if (disallowedPaths.Any(p => path.StartsWith(p)))
                     {
                         continue;
                     }
                     var fetchdata = await FetchPageAsync(url);
-                    results.Add((url, fetchdata.Text,fetchdata.Title));
+                    results.Add((normalizedUrl, fetchdata.Text,fetchdata.Title));
                     await Task.Delay(1000);
                     foreach (var link in fetchdata.Links)
                     {
-                        if (!_visited.Contains(link))
+                        var linkUri = new Uri(link);
+                        var normalizedLink = linkUri.GetLeftPart(UriPartial.Query);
+
+                        if (!_visited.Contains(normalizedLink))
                         {
-                            _frontier.Enqueue(link);
+                            _frontier.Enqueue(normalizedLink);
                         }
                     }
                 }
