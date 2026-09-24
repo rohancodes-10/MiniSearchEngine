@@ -1,0 +1,39 @@
+﻿@model List<SearchResult>
+
+@{
+    ViewData["Title"] = "Search";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Search</h2>
+
+    <form asp-action="Results" method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="Search..." value="@Context.Request.Query["q"]" />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    @if (Model == null)
+    {
+        <p class="text-muted">Enter a query above to search.</p>
+    }
+    else if (Model.Count == 0)
+    {
+        <p class="text-muted">No results found.</p>
+    }
+    else
+    {
+        foreach(var result in Model)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@result.Title</h5>
+                    <p class="text-muted small mb-1">@result.SourcePath</p>
+                    <p class="card-text">@result.Snippet</p>
+                    <span class="badge bg-secondary">Score: @result.Score.ToString("F4")</span>
+                </div>
+            </div>
+        }
+    }
+</div>
