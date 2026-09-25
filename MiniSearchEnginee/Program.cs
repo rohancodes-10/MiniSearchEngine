@@ -8,21 +8,9 @@ builder.Services.AddControllersWithViews();
 
 
 
-var crawler = new Crawler("https://en.wikipedia.org/wiki/Web_crawler");
-var pages = await crawler.CrawlAsync(10);
 
-var index = new InvertedIndex();
-int docid = 0;
-foreach (var page in pages)
-{
-    index.AddDocument(docid, page.Title, page.Url, page.Text);
-    docid++;
-}
 
-var scorer = new TfIdfScore(index);
-var searchEngine = new SearchEngineService(index, scorer);
-
-builder.Services.AddSingleton(searchEngine);
+builder.Services.AddSingleton<SearchEngineService>();
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -41,7 +29,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Search}/{action=Results}/{id?}")
+    pattern: "{controller=Search}/{action=Crawl}/{id?}")
     .WithStaticAssets();
 
 

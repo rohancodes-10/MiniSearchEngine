@@ -1,0 +1,28 @@
+﻿@{
+    ViewData["Title"] = "Crawl a Site";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Crawl a Site</h2>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }    
+    <form asp-action="Crawl" asp-controller="Search" method="post" class="mb-4">
+        <div class="mb-3">
+            <label class="form-label">Seed URL</label>
+            <input type="url" name="seedUrl" class="form-control" placeholder="https://en.wikipedia.org/wiki/Web_crawler" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Max pages</label>
+            <input type="number" name="maxPages" class="form-control" value="10" min="1" max="50" />
+        </div>
+        <button type="submit" class="btn btn-primary">Crawl</button>
+    </form>
+
+    <p class="text-muted small">
+        This will crawl the given site (respecting robots.txt, one page at a time) and replace the current search index. Larger page counts take longer — about 1 second per page.
+    </p>
+</div>

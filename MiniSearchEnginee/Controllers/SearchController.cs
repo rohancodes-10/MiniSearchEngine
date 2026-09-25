@@ -21,6 +21,22 @@ namespace MiniSearchEnginee.Controllers
             return View(results);
             
         }
+        [HttpGet]
+        public IActionResult Crawl()
+        {
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> Crawl(string seedUrl)
+        {
+            if (string.IsNullOrWhiteSpace(seedUrl))
+            {
+                TempData["Error"] = "Please enter a url";
+                RedirectToAction("Crawl");
+            }
+            await _searchEngineService.BuildIndexAsync(seedUrl, 15);
+            return RedirectToAction("Results");
+        }
         public IActionResult Index()
         {
             return View();
